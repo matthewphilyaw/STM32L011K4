@@ -1,97 +1,59 @@
 #include "main.h"
 
-static GPIO_InitTypeDef GPIO_InitStruct;
+void ll_init(void) {
+  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
+  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
 
-static void SystemClock_Config(void);
+  /* System interrupt init*/
+  NVIC_SetPriority(SysTick_IRQn, 0);
+}
 
-int main(void)
-{
-  HAL_Init();
+void system_clock_config(void) {
+  LL_RCC_PLL_Disable();
+  LL_FLASH_SetLatency(LL_FLASH_LATENCY_0);
+  LL_RCC_MSI_Enable();
 
-  /* Configure the system clock to 2 MHz */
-  SystemClock_Config();
-
-  /* -1- Enable GPIO Clock (to be able to program the configuration registers) */
-  LED3_GPIO_CLK_ENABLE();
-
-  /* -2- Configure IO in output push-pull mode to drive external LEDs */
-  GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull  = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-
-  GPIO_InitStruct.Pin = LED3_PIN;
-  HAL_GPIO_Init(LED3_GPIO_PORT, &GPIO_InitStruct);
-
-  /* -3- Toggle IO in an infinite loop */
-  while (1)
-  {
-    HAL_GPIO_TogglePin(LED3_GPIO_PORT, LED3_PIN);
-    /* Insert delay 100 ms */
-    HAL_Delay(500);
+  while(LL_RCC_MSI_IsReady() != 1) {
+    //empty
   }
+
+  LL_RCC_MSI_SetRange(LL_RCC_MSIRANGE_5);  
+  LL_RCC_MSI_SetCalibTrimming(0x0);
+
+  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_MSI);
+
+  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_MSI) {
+    //empty
+  }
+
+  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
+  LL_RCC_SetAPB2Prescaler(LL_RCC_APB2_DIV_1);
+
+  LL_Init1msTick(2097000);
+  LL_SetSystemCoreClock(2097000);
+
+  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
+  LL_PWR_SetRegulVoltageScaling(LL_PWR_REGU_VOLTAGE_SCALE3);
+  LL_APB1_GRP1_DisableClock(LL_APB1_GRP1_PERIPH_PWR);
+}
+
+int main(void) {
+  //ll_init();
+  //system_clock_config();
+
+  /*LL_GPIO_InitTypeDef led;
+  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
+
+  led.Pin = LL_GPIO_PIN_3;
+  led.Mode = LL_GPIO_MODE_OUTPUT;
+  led.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  led.Pull = LL_GPIO_PULL_NO;
+
+  LL_GPIO_Init(GPIOB, &led);
+  */
   for (;;) {
-
+    //LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_3);
+    //LL_mDelay(150);
   }
 }
-
-void SystemClock_Config(void)
-{
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  
-  /* Enable MSI Oscillator */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
-  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
-  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_5;
-  RCC_OscInitStruct.MSICalibrationValue=0x00;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct)!= HAL_OK)
-  {
-    /* Initialization Error */
-    while(1); 
-  }
-  
-  /* Select MSI as system clock source and configure the HCLK, PCLK1 and PCLK2 
-     clocks dividers */
-  RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;  
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;  
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0)!= HAL_OK)
-  {
-    /* Initialization Error */
-    while(1); 
-  }
-  /* Enable Power Control clock */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  
-  /* The voltage scaling allows optimizing the power consumption when the device is 
-     clocked below the maximum system frequency, to update the voltage scaling value 
-     regarding system frequency refer to product datasheet.  */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
-  
-  /* Disable Power Control clock */
-  __HAL_RCC_PWR_CLK_DISABLE();
-  
-}
-
-
-void reset_handler() {
-
-}
-
-void _init() {
-
-}
-
-#ifdef  USE_FULL_ASSERT
-
-void assert_failed(uint8_t *file, uint32_t line)
-{
-  while (1)
-  {
-  }
-}
-
-#endif

@@ -3,7 +3,7 @@ PROJECT=STM32L0
 OUT_DIR=build
 TOOL_ROOT=/usr/local/gcc-arm-none-eabi-5_2-2015q4/bin
 
-DEFS=-DSTM32L011xx
+DEFS=-DSTM32L011xx -DUSE_FULL_LL_DRIVER
 MCU=cortex-m0plus
 
 SYS_DIR=system
