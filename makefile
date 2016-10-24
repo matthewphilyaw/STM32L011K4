@@ -50,7 +50,7 @@ LDSCRIPTS_FILES=$(shell find -L $(SYS_DIR) -name '*.ld')
 LDSCRIPTS=$(LDSCRIPTS_FILES:%=-T%)
 
 # System files
-SYS_ASMS=$(shell find -L $(SYS_SRC_DIR) -name '*.S')
+SYS_ASM=$(shell find -L $(SYS_SRC_DIR) -name '*.S')
 SYS_C=$(shell find -L $(SYS_SRC_DIR) -name '*.c')
 SYS_CXX=$(shell find -L $(SYS_SRC_DIR) -name '*.cpp')
 
@@ -69,36 +69,33 @@ USR_OBJS+=$(USR_CXX:%.cpp=$(OUT_DIR)/%.o)
 
 OBJS=$(SYS_OBJS)
 OBJS+=$(USR_OBJS)
+
 OBJ_OUT_DIRS=$(subst /,/,$(sort $(dir $(OBJS))))
 
-MCU_FLAGS=-mcpu=$(MCU) -mthumb
+MCU_FLAGS=-mcpu=$(MCU) -mthumb -mfloat-abi=soft
 
 BASE_FLAGS=$(MCU_FLAGS) $(DEFS) $(INCS)
-BASE_FLAGS+=-fno-exceptions \
-		   -ffunction-sections \
-		   -fdata-sections \
-		   -Wall \
-		   -gdwarf-2 \
-		   -c
+BASE_FLAGS+=-Wall \
+			-fmessage-length=0 \
+			-ffunction-sections \
+			-c
 
 C_FLAGS=$(BASE_FLAGS)
 
 CXX_FLAGS=$(BASE_FLAGS) \
-		  -std=gnu++11 \
+		  -std=c++0x \
+		  -fno-exceptions \
 		  -fno-rtti \
-		  -fno-threadsafe-statics \
-		  -Wextra
+#		  -fno-threadsafe-statics \
+#	  -Wextra
 
-LD_FLAGS=-Xlinker \
-		 $(LDSCRIPTS) \
+LD_FLAGS=$(LDSCRIPTS) \
 		 $(MCU_FLAGS) \
-		 -nostartfiles \
-		 -gdwarf-2 \
+		 -fno-exceptions \
+		 -fno-rtti \
 		 -Wl,-Map=$(OUT_DIR)/$(MAP) \
-		 -Wl,-gc-sections \
-		 -Wl,-wrap,__aeabi_unwind_cpp_pr0 \
-		 -Wl,-wrap,__aeabi_unwind_cpp_pr1 \
-		 -Wl,-wrap,__aeabi_unwind_cpp_pr2
+		 -Wl,--gc-sections \
+		 -lm
 
 .PHONY: all release release-memopt debug debug-no-opt clean clean-all
 
@@ -115,19 +112,19 @@ release-memopt: CXX_FLAGS+=-O2
 release-memopt: LD_FLAGS+=-O2
 release-memopt: release
 
-release-small: CF_LAGS+=-Os
+release-small: C_FLAGS+=-Os
 release-small: CXX_FLAGS+=-Os
 release-small: LD_FLAGS+=-Os
 release-small: release
 
 debug: DEFS+=-DDEBUG
-debug: CF_LAGS+=-Og -g3
-debug: CXX_FLAGS+=-Og -g3
-debug: LDFLAGS+=-g3
+debug: C_FLAGS+=-O0 -g3
+debug: CXX_FLAGS+=-O0 -g3
+#debug: LD_FLAGS+=-g3
 debug: release
 
 debug-no-opt: DEFS+=-DDEBUG
-debug-no-opt: CF_LAGS+=-O0 -g3
+debug-no-opt: C_FLAGS+=-O0 -g3
 debug-no-opt: CXX_FLAGS+=-O0 -g3
 debug-no-opt: LD_FLAGS+=-g0
 debug-no-opt: release
@@ -149,7 +146,7 @@ $(OUT_DIR)/$(LST): $(OUT_DIR)/$(ELF)
 	@echo "Objdump from ELF to listing complete!\n"
 
 $(OUT_DIR)/$(ELF): $(OBJS)
-	$(CXX) -o $@ $(LD_FLAGS) $(OBJS) -lm -o $@
+	$(CXX) -o $@ $(LD_FLAGS) $(OBJS)
 	@echo "Linking complete!\n"
 	$(SIZE) $(OUT_DIR)/$(ELF)
 
