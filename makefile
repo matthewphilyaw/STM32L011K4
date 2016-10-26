@@ -86,8 +86,8 @@ CXX_FLAGS=$(BASE_FLAGS) \
 		  -std=c++0x \
 		  -fno-exceptions \
 		  -fno-rtti \
-#		  -fno-threadsafe-statics \
-#	  -Wextra
+		  -fno-threadsafe-statics \
+		  -Wextra
 
 LD_FLAGS=$(LDSCRIPTS) \
 		 $(MCU_FLAGS) \
@@ -95,6 +95,7 @@ LD_FLAGS=$(LDSCRIPTS) \
 		 -fno-rtti \
 		 -Wl,-Map=$(OUT_DIR)/$(MAP) \
 		 -Wl,--gc-sections \
+		 --specs=nano.specs \
 		 -lm
 
 .PHONY: all release release-memopt debug debug-no-opt clean clean-all
@@ -118,9 +119,9 @@ release-small: LD_FLAGS+=-Os
 release-small: release
 
 debug: DEFS+=-DDEBUG
-debug: C_FLAGS+=-O0 -g3
-debug: CXX_FLAGS+=-O0 -g3
-#debug: LD_FLAGS+=-g3
+debug: C_FLAGS+=-Og -g3
+debug: CXX_FLAGS+=-Og -g3
+debug: LD_FLAGS+=-g3
 debug: release
 
 debug-no-opt: DEFS+=-DDEBUG
@@ -148,7 +149,7 @@ $(OUT_DIR)/$(LST): $(OUT_DIR)/$(ELF)
 $(OUT_DIR)/$(ELF): $(OBJS)
 	$(CXX) -o $@ $(LD_FLAGS) $(OBJS)
 	@echo "Linking complete!\n"
-	$(SIZE) $(OUT_DIR)/$(ELF)
+	$(SIZE) $(OBJS) $(OUT_DIR)/$(ELF)
 
 $(OUT_DIR)/%.o: %.cpp
 	$(CXX) $(CXX_FLAGS) $< -o $@

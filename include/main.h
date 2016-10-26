@@ -12,6 +12,8 @@
 #include "stm32l0xx_ll_usart.h"
 #include "stm32l0xx_ll_exti.h"
 
+#include "terminal.h"
+
 #define USARTx_INSTANCE               USART2
 #define USARTx_CLK_ENABLE()           LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART2)
 #define USARTx_CLK_SOURCE()           LL_RCC_SetUSARTClockSource(LL_RCC_USART2_CLKSOURCE_PCLK1)
