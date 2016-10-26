@@ -161,7 +161,7 @@ $(OUT_DIR)/%.o: %.c
 
 $(OUT_DIR)/%.o: %.S
 	$(CC) $(C_FLAGS) $< -o $@
-	@echo "Assambled "$<"!\n"
+	@echo "Assembled "$<"!\n"
 
 clean:
 	rm -f \

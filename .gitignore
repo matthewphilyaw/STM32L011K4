@@ -37,6 +37,7 @@ Debug
 
 # Misc
 *.swp
+*.swo
 *.DS_Store
 *.pyc
 bin
